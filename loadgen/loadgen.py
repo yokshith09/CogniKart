@@ -290,7 +290,9 @@ def main() -> int:
     print("  ceilings %.0fs duration, %d requests" % (args.duration, args.max_requests))
     print()
 
-    stats = asyncio.get_event_loop().run_until_complete(
+    # asyncio.run rather than get_event_loop(): the latter is deprecated from
+    # Python 3.10 and warns loudly on Cloud Shell's 3.12.
+    stats = asyncio.run(
         run_load(args.url, args.profile, args.duration, args.max_requests, args.quiet))
     print(stats.summary())
     return 0

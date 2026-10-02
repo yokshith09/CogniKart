@@ -305,11 +305,15 @@ Every flag:
 | `--max-instances 1` | Stock lives in memory. Two instances = two different stock counts = "only 7 left" stops meaning anything |
 | `--set-env-vars` | `SERVICE_NAME=catalog` is what makes this image behave as the catalog |
 
-Capture the URL:
+**Capture the URL — do not skip this.** `orders` and `gateway` are wired to
+catalog through this variable. If it is empty when you deploy them, they deploy
+fine and then fail on every request:
 
 ```bash
 export CATALOG_URL=$(gcloud run services describe cognikart-catalog --region $REGION --format 'value(status.url)') && echo $CATALOG_URL
 ```
+
+It must print a URL. If it prints a blank line, stop and re-run it.
 
 Check it:
 
@@ -339,6 +343,15 @@ export PAYMENTS_URL=$(gcloud run services describe cognikart-payments --region $
 ```
 
 ### Step 8 — orders
+
+**Check both URLs are set before you run this.** Steps 6 and 7 each end with an
+`export`, and skipping one is the single easiest mistake to make here — the
+deploy still succeeds, but the service is wired to an empty URL and every
+checkout fails silently:
+
+```bash
+[ -n "$CATALOG_URL" ] && [ -n "$PAYMENTS_URL" ] && echo "OK — both set" || echo "STOP: go back and run the export lines from steps 6 and 7"
+```
 
 Now the wiring begins. This service gets two extra env vars:
 
@@ -497,6 +510,10 @@ Expect **$0** for a hackathon's worth of use.
 ---
 
 ## Part 8 — Tear down when finished
+
+> **Do not run this section until the hackathon is over.** It deletes all four
+> services and the service account. Everything is recoverable — redeploy from
+> Part 4 — but your URLs change and you start from nothing.
 
 ```bash
 for s in cognikart-gateway cognikart-orders cognikart-payments cognikart-catalog; do gcloud run services delete $s --region $REGION --quiet; done
