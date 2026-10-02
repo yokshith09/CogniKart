@@ -1,0 +1,11 @@
+# Keep the build context small: everything here is uploaded to Cloud Build on
+# every deploy, and anything not excluded is baked into the image.
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.DS_Store
+.git/
+.github/
+*.md
+loadgen/

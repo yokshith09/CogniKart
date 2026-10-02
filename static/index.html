@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CogniKart</title>
+<link rel="stylesheet" href="/static/shop.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">COGNI<i>KART</i></div>
+    <nav class="nav" id="nav">
+      <button data-view="shop" class="on">Shop</button>
+      <button data-view="cart">Cart <span class="pip" id="cartPip" hidden>0</span></button>
+      <button data-view="orders">Orders</button>
+      <button data-view="desk" id="navDesk" hidden>Fulfilment</button>
+      <button data-view="lab">Scenario Lab</button>
+    </nav>
+    <span class="who" id="who" hidden></span>
+    <button class="btn-line" id="authBtn">Sign in</button>
+  </div>
+</header>
+
+<main>
+  <!-- SHOP -->
+  <section class="view on" id="v-shop">
+    <div class="hero">
+      <div>
+        <div class="label">Autumn / Winter</div>
+        <h1>Pieces built to<br><em>outlive</em> the season.</h1>
+        <p>A short, considered range — outerwear, knitwear, shirting and the pieces
+           that go beneath them. Every order holds real stock and runs through
+           payment and fulfilment.</p>
+      </div>
+      <div class="hero-note">
+        <div class="label">01 / The collection</div>
+        <strong id="heroStat">Fourteen pieces. Honest stock counts.</strong>
+        <div class="label">Stock is reserved the moment an order is placed</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="search">
+        <div class="label" style="margin-bottom:7px">Search</div>
+        <input type="text" id="q" placeholder="Wool, linen, FW-KNIT-01…">
+      </div>
+      <div id="chips" style="display:flex;gap:9px;flex-wrap:wrap"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="shopEmpty" hidden>Nothing matches that.</div>
+  </section>
+
+  <!-- CART -->
+  <section class="view" id="v-cart">
+    <div id="cartNotice"></div>
+    <h1 style="font-size:34px;margin-bottom:26px">Your order</h1>
+    <div class="split">
+      <div class="rows" id="cartRows"></div>
+      <div class="panel" id="cartSummary"></div>
+    </div>
+  </section>
+
+  <!-- ORDERS -->
+  <section class="view" id="v-orders">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
+      <h1 style="font-size:34px">Your orders</h1>
+      <button class="btn-line" id="ordersRefresh">Refresh</button>
+    </div>
+    <div class="rows" id="orderRows"></div>
+  </section>
+
+  <!-- FULFILMENT DESK -->
+  <section class="view" id="v-desk">
+    <h1 style="font-size:34px;margin-bottom:6px">Fulfilment desk</h1>
+    <div class="label" style="margin-bottom:26px">Staff only · every action is logged with your role</div>
+    <div class="rows" id="deskRows" style="margin-bottom:46px"></div>
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px">
+      <h2 style="font-size:22px">Stock and availability</h2>
+      <span class="label">Setting stock to zero takes a piece off sale</span>
+    </div>
+    <div class="rows" id="stockRows"></div>
+  </section>
+
+  <!-- SCENARIO LAB -->
+  <section class="view" id="v-lab">
+    <h1 style="font-size:34px;margin-bottom:6px">Scenario lab</h1>
+    <div class="label" style="margin-bottom:10px">Controlled, reversible, self-expiring failure injection</div>
+    <p style="color:var(--ink-2);max-width:74ch;margin:0 0 30px">
+      A payment outcome chosen at checkout produces a single failed order — one log line.
+      These scenarios degrade a service for <em>everyone</em>, sustained, which is what
+      actually crosses a threshold and raises an incident in OpsMind.
+    </p>
+    <div id="scenarios"></div>
+    <div style="margin-top:26px">
+      <button class="btn-line danger" id="recoverBtn">Recover everything</button>
+    </div>
+  </section>
+
+  <!-- SIGN IN -->
+  <section class="view" id="v-auth">
+    <div class="auth-wrap">
+      <div>
+        <h1>Sign in to<br>place an order.</h1>
+        <p style="color:var(--ink-2);max-width:48ch;margin-top:18px">
+          Orders, order history and the fulfilment desk are tied to an account.
+          Passwords are hashed with a salted key-derivation function and sessions
+          are held in a signed, HttpOnly cookie.
+        </p>
+        <div class="label" style="margin-top:34px">Seeded demo accounts</div>
+        <table class="accts"><tbody id="acctRows"></tbody></table>
+        <div class="label" id="kdfNote" style="margin-top:14px"></div>
+      </div>
+      <div class="panel">
+        <div class="tabs">
+          <button class="on" data-tab="signin">Sign in</button>
+          <button data-tab="signup">Create account</button>
+        </div>
+        <div id="authErr"></div>
+        <div class="field" id="nameField" hidden>
+          <label class="label">Your name</label>
+          <input type="text" id="aName" placeholder="Sarah Jenkins">
+        </div>
+        <div class="field">
+          <label class="label">Email address</label>
+          <input type="email" id="aEmail" placeholder="you@example.com" autocomplete="username">
+        </div>
+        <div class="field">
+          <label class="label">Password</label>
+          <input type="password" id="aPass" autocomplete="current-password">
+        </div>
+        <button class="btn-solid" id="authSubmit">Sign in</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="f-in">
+    <span class="label">CogniKart / order management demo</span>
+    <span class="label">Structured telemetry for GCP Cloud Logging &amp; Monitoring</span>
+  </div>
+</footer>
+
+<!-- The bridge to OpsMind: every action's trace id, copyable. -->
+<div class="obs">
+  <div class="obs-in">
+    <b>TELEMETRY</b>
+    <span><span class="k">session</span> <code id="obsSession">—</code></span>
+    <span><span class="k">trace</span> <code id="obsTrace" title="Copy, then paste into OpsMind log search">—</code></span>
+    <span><span class="k">request</span> <code id="obsReq">—</code></span>
+    <span class="ev" id="obsEvent">ready</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/static/shop.js"></script>
+</body>
+</html>

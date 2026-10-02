@@ -1,0 +1,155 @@
+{
+ "generatedBy": "scripts/gen_seed.py",
+ "collection": "Autumn / Winter",
+ "categories": [
+  "Accessories",
+  "Dresses",
+  "Knitwear",
+  "Outerwear",
+  "Shirting",
+  "Trousers"
+ ],
+ "count": 14,
+ "products": [
+  {
+   "id": "FW-COAT-01",
+   "name": "Falmouth Wool Overcoat",
+   "category": "Outerwear",
+   "art": "coat",
+   "priceInr": 428.0,
+   "stock": 12,
+   "available": true,
+   "blurb": "Double-faced wool melton, unlined through the body, cut long."
+  },
+  {
+   "id": "FW-TRNC-01",
+   "name": "Harbour Cotton Trench",
+   "category": "Outerwear",
+   "art": "trench",
+   "priceInr": 365.0,
+   "stock": 18,
+   "available": true,
+   "blurb": "Waxed cotton with a storm flap and a removable belt."
+  },
+  {
+   "id": "FW-KNIT-01",
+   "name": "Merino Crew Knit",
+   "category": "Knitwear",
+   "art": "knit",
+   "priceInr": 138.0,
+   "stock": 54,
+   "available": true,
+   "blurb": "Fine-gauge merino, fully fashioned, in a true crew neck."
+  },
+  {
+   "id": "FW-KNIT-02",
+   "name": "Lambswool Cable Jumper",
+   "category": "Knitwear",
+   "art": "knit",
+   "priceInr": 164.0,
+   "stock": 31,
+   "available": true,
+   "blurb": "Heavier lambswool with a hand-framed cable through the front."
+  },
+  {
+   "id": "FW-KNIT-03",
+   "name": "Alpaca Funnel Neck",
+   "category": "Knitwear",
+   "art": "knit",
+   "priceInr": 212.0,
+   "stock": 9,
+   "available": true,
+   "blurb": "Brushed alpaca blend with a soft funnel collar."
+  },
+  {
+   "id": "FW-SHRT-01",
+   "name": "Washed Oxford Shirt",
+   "category": "Shirting",
+   "art": "shirt",
+   "priceInr": 89.0,
+   "stock": 86,
+   "available": true,
+   "blurb": "Garment-washed oxford cotton with a soft unlined collar."
+  },
+  {
+   "id": "FW-SHRT-02",
+   "name": "Brushed Flannel Shirt",
+   "category": "Shirting",
+   "art": "shirt",
+   "priceInr": 112.0,
+   "stock": 47,
+   "available": true,
+   "blurb": "Double-brushed cotton flannel in a relaxed cut."
+  },
+  {
+   "id": "FW-TROU-01",
+   "name": "Wide Leg Wool Trouser",
+   "category": "Trousers",
+   "art": "trouser",
+   "priceInr": 176.0,
+   "stock": 40,
+   "available": true,
+   "blurb": "High rise with a pressed crease, in a mid-weight wool twill."
+  },
+  {
+   "id": "FW-TROU-02",
+   "name": "Selvedge Straight Denim",
+   "category": "Trousers",
+   "art": "denim",
+   "priceInr": 142.0,
+   "stock": 61,
+   "available": true,
+   "blurb": "Fourteen ounce selvedge denim, raw and unsanforized."
+  },
+  {
+   "id": "FW-DRES-01",
+   "name": "Bias Cut Linen Dress",
+   "category": "Dresses",
+   "art": "dress",
+   "priceInr": 198.0,
+   "stock": 22,
+   "available": true,
+   "blurb": "Cut on the bias in a washed linen that softens with wear."
+  },
+  {
+   "id": "FW-DRES-02",
+   "name": "Knitted Midi Dress",
+   "category": "Dresses",
+   "art": "dress",
+   "priceInr": 174.0,
+   "stock": 16,
+   "available": true,
+   "blurb": "Rib-knit midi with a straight neckline and long sleeves."
+  },
+  {
+   "id": "FW-ACCS-01",
+   "name": "Lambswool Scarf",
+   "category": "Accessories",
+   "art": "scarf",
+   "priceInr": 64.0,
+   "stock": 73,
+   "available": true,
+   "blurb": "Woven lambswool with hand-knotted fringing."
+  },
+  {
+   "id": "FW-ACCS-02",
+   "name": "Vegetable Tanned Tote",
+   "category": "Accessories",
+   "art": "tote",
+   "priceInr": 285.0,
+   "stock": 16,
+   "available": true,
+   "blurb": "Vegetable tanned leather that patinas with wear. Unlined."
+  },
+  {
+   "id": "FW-ACCS-03",
+   "name": "Chelsea Boot",
+   "category": "Accessories",
+   "art": "boot",
+   "priceInr": 312.0,
+   "stock": 7,
+   "available": true,
+   "blurb": "Goodyear welted on a leather sole, with elasticated sides."
+  }
+ ]
+}
