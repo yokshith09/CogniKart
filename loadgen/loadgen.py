@@ -26,7 +26,7 @@ import sys
 import time
 import uuid
 from collections import Counter
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
@@ -55,6 +55,8 @@ class Stats:
         self.latencies: List[float] = []
         self.checkouts_ok = 0
         self.checkouts_failed = 0
+        self.cancelled = 0
+        self.outcomes: Counter = Counter()
         self.revenue_ok = 0.0
         self.revenue_lost = 0.0
         self.requests = 0
@@ -80,12 +82,15 @@ class Stats:
             "  requests      %d in %.0fs  (%.2f req/s)" % (self.requests, el, self.requests / el),
             "  responses     2xx/3xx=%d  4xx=%d  5xx=%d" % (ok, c4, c5),
             "  latency       p50=%.0fms  p95=%.0fms" % (p50, p95),
-            "  checkouts     confirmed=%d  failed=%d  success=%s" % (
-                self.checkouts_ok, self.checkouts_failed,
+            "  checkouts     confirmed=%d  failed=%d  cancelled=%d  success=%s" % (
+                self.checkouts_ok, self.checkouts_failed, self.cancelled,
                 ("%.1f%%" % (100.0 * self.checkouts_ok / settled)) if settled else "n/a"),
             "  revenue       captured=INR %.2f   at risk=INR %.2f" % (
                 self.revenue_ok, self.revenue_lost),
         ]
+        if self.outcomes:
+            lines.append("  pay outcomes  " + "  ".join(
+                "%s=%d" % (k, v) for k, v in self.outcomes.most_common()))
         if self.by_journey:
             lines.append("  journeys      " + "  ".join(
                 "%s=%d" % (k, v) for k, v in self.by_journey.most_common()))
@@ -114,83 +119,122 @@ def pick_journey() -> str:
 
 
 class Shopper:
+    """One shopper session against the storefront.
+
+    Sessions are real: the generator signs in through /api/auth/signin and
+    carries the cookie, because orders require authentication. Earlier versions
+    posted to /api/cart and /api/checkout, which stopped existing when accounts
+    were added -- the result was traffic that browsed happily and never placed
+    a single order. Keeping this aligned with the gateway's actual routes
+    matters more than it looks: no orders means no payments, which means no
+    incident to detect.
+    """
+
     def __init__(self, base: str, client: httpx.AsyncClient, stats: Stats,
-                 catalog_cache: List[Dict[str, Any]]) -> None:
+                 catalog_cache: List[Dict[str, Any]], cookies: Any) -> None:
         self.base = base.rstrip("/")
         self.client = client
         self.stats = stats
         self.catalog = catalog_cache
+        self.cookies = cookies
         self.session = "sess_" + uuid.uuid4().hex[:10]
         self.headers = {
             "X-Session-Id": self.session,
-            "X-User-Hash": user_hash(self.session),
-            "User-Agent": "cognikart-loadgen/1.0",
+            "User-Agent": "cognikart-loadgen/2.0",
         }
 
     async def _req(self, method: str, path: str,
                    json_body: Optional[Dict[str, Any]] = None,
-                   timeout: float = 30.0) -> Optional[Dict[str, Any]]:
+                   timeout: float = 30.0,
+                   authed: bool = True) -> Tuple[int, Optional[Dict[str, Any]]]:
         started = time.time()
         try:
             resp = await self.client.request(
-                method, self.base + path, json=json_body,
-                headers=self.headers, timeout=timeout)
+                method, self.base + path, json=json_body, headers=self.headers,
+                cookies=self.cookies if authed else None, timeout=timeout)
         except Exception:
             self.stats.record(0, time.time() - started)
             self.stats.errors["CLIENT_TIMEOUT"] += 1
-            return None
+            return 0, None
         self.stats.record(resp.status_code, time.time() - started)
         try:
             body = resp.json()
         except Exception:
-            return None
+            return resp.status_code, None
         if isinstance(body, dict) and body.get("error"):
             self.stats.errors[body["error"]] += 1
-        return body if isinstance(body, dict) else None
+        return resp.status_code, body if isinstance(body, dict) else None
 
     async def browse(self) -> List[Dict[str, Any]]:
-        page = random.randint(1, 8)
-        body = await self._req("GET", "/api/products?page=%d" % page)
+        category = random.choice([None] + CATEGORIES)
+        path = "/api/products" + (f"?category={category}" if category else "")
+        _s, body = await self._req("GET", path)
         products = (body or {}).get("products") or []
-        if products and len(self.catalog) < 120:
-            self.catalog.extend(p for p in products if p.get("stock", 0) > 5)
+        if products:
+            self.catalog[:] = [p for p in products if p.get("stock", 0) > 2][:40] or self.catalog
         return products
 
     async def view_some(self, products: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         viewed = []
         for p in random.sample(products, min(len(products), random.randint(2, 4))):
-            await self._req("GET", "/api/products/%s" % p["id"])
+            await self._req("GET", f"/api/products/{p['id']}")
             viewed.append(p)
         return viewed
 
-    async def add_to_cart(self, product: Dict[str, Any], qty: int = 1) -> None:
-        await self._req("POST", "/api/cart", {
-            "sessionId": self.session,
-            "item": {"id": product["id"], "qty": qty,
-                     "priceInr": product["priceInr"]},
-        })
+    async def place_and_pay(self, picks: List[Dict[str, Any]]) -> None:
+        """The two-phase flow: place reserves stock, pay is a separate call."""
+        items = [{"id": p["id"], "qty": random.randint(1, 2),
+                  "priceInr": p["priceInr"]} for p in picks]
+        value = sum(i["priceInr"] * i["qty"] for i in items)
 
-    async def checkout(self, items: List[Dict[str, Any]]) -> None:
-        value = sum(float(i["priceInr"]) * int(i["qty"]) for i in items)
-        body = await self._req("POST", "/api/checkout",
-                               {"sessionId": self.session, "items": items},
-                               timeout=45.0)
-        if body and body.get("status") == "CONFIRMED":
-            self.stats.checkouts_ok += 1
-            self.stats.revenue_ok += body.get("cartValueInr") or value
-        elif body is not None:
+        status, body = await self._req("POST", "/api/orders", {"items": items}, timeout=45.0)
+        if status != 200 or not body or not body.get("orderId"):
             self.stats.checkouts_failed += 1
             self.stats.revenue_lost += value
+            return
+        order_id = body["orderId"]
+
+        # Most shoppers pay normally. A minority hit a provider problem, which
+        # gives the platform a natural error floor without any chaos injected.
+        outcome = random.choices(
+            ("approved", "rejected", "slow"), weights=(86, 10, 4))[0]
+        self.stats.outcomes[outcome] += 1
+
+        status, body = await self._req(
+            "POST", f"/api/orders/{order_id}/pay", {"outcome": outcome}, timeout=60.0)
+        if status == 200 and body and body.get("status") == "PAID":
+            self.stats.checkouts_ok += 1
+            self.stats.revenue_ok += body.get("totalInr") or value
+            return
+
+        self.stats.checkouts_failed += 1
+        self.stats.revenue_lost += value
+        # A shopper who cannot pay usually gives up and releases the stock.
+        if random.random() < 0.5:
+            await self._req("POST", f"/api/orders/{order_id}/cancel")
+            self.stats.cancelled += 1
 
     async def client_error(self) -> None:
-        """Deliberate client mistakes, so the 4xx series is non-zero."""
-        which = random.choice(["bad-sku", "empty-cart", "bad-cart"])
+        """Deliberate client mistakes, so the 4xx series is never a flat zero."""
+        which = random.choice(["bad-sku", "empty-order", "over-stock", "no-session"])
         if which == "bad-sku":
-            await self._req("GET", "/api/products/SKU-%d" % random.randint(90000, 99999))
-        elif which == "empty-cart":
-            await self._req("POST", "/api/checkout", {"items": []})
+            await self._req("GET", f"/api/products/FW-NOPE-{random.randint(10,99)}")
+        elif which == "empty-order":
+            await self._req("POST", "/api/orders", {"items": []})
+        elif which == "over-stock" and self.catalog:
+            p = random.choice(self.catalog)
+            # Slightly more than exists, not an absurd quantity. qty=9999 was
+            # producing orders worth lakhs, which made revenue-at-risk
+            # meaningless -- a figure is only useful if it is plausible.
+            qty = int(p.get("stock", 5)) + random.randint(1, 4)
+            await self._req("POST", "/api/orders",
+                            {"items": [{"id": p["id"], "qty": qty,
+                                        "priceInr": p["priceInr"]}]})
         else:
-            await self._req("POST", "/api/cart", {"sessionId": self.session, "item": {}})
+            # No cookie: exercises the 401 path and logs an authz event.
+            await self._req("POST", "/api/orders",
+                            {"items": [{"id": "FW-KNIT-01", "qty": 1, "priceInr": 138}]},
+                            authed=False)
 
     async def run(self, journey: str, allow_checkout: bool) -> None:
         self.stats.by_journey[journey] += 1
@@ -205,20 +249,42 @@ class Shopper:
         if journey == "browser" or not viewed:
             return
 
-        chosen = random.choice(viewed)
-        await self.add_to_cart(chosen)
+        in_stock = [p for p in viewed if p.get("stock", 0) > 2] or viewed
         if journey == "abandoner" or not allow_checkout:
             return
 
         if journey == "bulk":
-            pool = [p for p in (self.catalog or viewed) if p.get("stock", 0) > 5]
-            picks = random.sample(pool, min(len(pool), random.randint(2, 4))) or [chosen]
-            items = [{"id": p["id"], "qty": random.randint(1, 3),
-                      "priceInr": p["priceInr"]} for p in picks]
+            pool = [p for p in (self.catalog or in_stock) if p.get("stock", 0) > 2]
+            picks = random.sample(pool, min(len(pool), random.randint(2, 3))) or in_stock[:1]
         else:
-            items = [{"id": chosen["id"], "qty": random.randint(1, 2),
-                      "priceInr": chosen["priceInr"]}]
-        await self.checkout(items)
+            picks = [random.choice(in_stock)]
+        await self.place_and_pay(picks)
+
+
+CATEGORIES = ["Outerwear", "Knitwear", "Shirting", "Trousers", "Dresses", "Accessories"]
+
+DEMO_ACCOUNT = {"email": "customer@cognikart.demo", "password": "ShopPass2026!"}
+
+
+async def sign_in(base: str, client: httpx.AsyncClient) -> Optional[Any]:
+    """Authenticate once and reuse the session cookie.
+
+    Orders require a signed-in session, so without this the generator produces
+    browsing traffic and a wall of 401s.
+    """
+    try:
+        resp = await client.post(
+            base.rstrip("/") + "/api/auth/signin", json=DEMO_ACCOUNT, timeout=30.0)
+    except Exception as exc:
+        print("  ! could not reach the storefront to sign in: %s" % exc)
+        return None
+    if resp.status_code != 200:
+        print("  ! sign-in failed (HTTP %d). Orders will not be placed; "
+              "browsing traffic only." % resp.status_code)
+        return None
+    user = (resp.json() or {}).get("user") or {}
+    print("  signed in as %s (%s)" % (user.get("name", "?"), user.get("role", "?")))
+    return resp.cookies
 
 
 async def run_load(base: str, profile: str, duration_s: float,
@@ -234,10 +300,11 @@ async def run_load(base: str, profile: str, duration_s: float,
 
     limits = httpx.Limits(max_connections=40, max_keepalive_connections=20)
     async with httpx.AsyncClient(limits=limits) as client:
+        cookies = await sign_in(base, client)
         while time.time() < deadline and stats.requests < max_requests:
             journey = "buyer" if profile == "checkout-heavy" and random.random() < 0.6 \
                 else pick_journey()
-            shopper = Shopper(base, client, stats, catalog_cache)
+            shopper = Shopper(base, client, stats, catalog_cache, cookies)
             task = asyncio.ensure_future(shopper.run(journey, allow_checkout))
             inflight.add(task)
             task.add_done_callback(inflight.discard)

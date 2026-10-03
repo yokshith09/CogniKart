@@ -17,7 +17,7 @@
    "category": "Outerwear",
    "art": "coat",
    "priceInr": 428.0,
-   "stock": 12,
+   "stock": 240,
    "available": true,
    "blurb": "Double-faced wool melton, unlined through the body, cut long."
   },
@@ -27,7 +27,7 @@
    "category": "Outerwear",
    "art": "trench",
    "priceInr": 365.0,
-   "stock": 18,
+   "stock": 310,
    "available": true,
    "blurb": "Waxed cotton with a storm flap and a removable belt."
   },
@@ -37,7 +37,7 @@
    "category": "Knitwear",
    "art": "knit",
    "priceInr": 138.0,
-   "stock": 54,
+   "stock": 820,
    "available": true,
    "blurb": "Fine-gauge merino, fully fashioned, in a true crew neck."
   },
@@ -47,7 +47,7 @@
    "category": "Knitwear",
    "art": "knit",
    "priceInr": 164.0,
-   "stock": 31,
+   "stock": 460,
    "available": true,
    "blurb": "Heavier lambswool with a hand-framed cable through the front."
   },
@@ -67,7 +67,7 @@
    "category": "Shirting",
    "art": "shirt",
    "priceInr": 89.0,
-   "stock": 86,
+   "stock": 940,
    "available": true,
    "blurb": "Garment-washed oxford cotton with a soft unlined collar."
   },
@@ -77,7 +77,7 @@
    "category": "Shirting",
    "art": "shirt",
    "priceInr": 112.0,
-   "stock": 47,
+   "stock": 520,
    "available": true,
    "blurb": "Double-brushed cotton flannel in a relaxed cut."
   },
@@ -87,7 +87,7 @@
    "category": "Trousers",
    "art": "trouser",
    "priceInr": 176.0,
-   "stock": 40,
+   "stock": 610,
    "available": true,
    "blurb": "High rise with a pressed crease, in a mid-weight wool twill."
   },
@@ -97,7 +97,7 @@
    "category": "Trousers",
    "art": "denim",
    "priceInr": 142.0,
-   "stock": 61,
+   "stock": 700,
    "available": true,
    "blurb": "Fourteen ounce selvedge denim, raw and unsanforized."
   },
@@ -107,7 +107,7 @@
    "category": "Dresses",
    "art": "dress",
    "priceInr": 198.0,
-   "stock": 22,
+   "stock": 280,
    "available": true,
    "blurb": "Cut on the bias in a washed linen that softens with wear."
   },
@@ -117,7 +117,7 @@
    "category": "Dresses",
    "art": "dress",
    "priceInr": 174.0,
-   "stock": 16,
+   "stock": 240,
    "available": true,
    "blurb": "Rib-knit midi with a straight neckline and long sleeves."
   },
@@ -127,7 +127,7 @@
    "category": "Accessories",
    "art": "scarf",
    "priceInr": 64.0,
-   "stock": 73,
+   "stock": 880,
    "available": true,
    "blurb": "Woven lambswool with hand-knotted fringing."
   },
@@ -137,7 +137,7 @@
    "category": "Accessories",
    "art": "tote",
    "priceInr": 285.0,
-   "stock": 16,
+   "stock": 190,
    "available": true,
    "blurb": "Vegetable tanned leather that patinas with wear. Unlined."
   },
